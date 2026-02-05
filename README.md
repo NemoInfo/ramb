@@ -1,15 +1,6 @@
 # Ramb 𝞴-calculus interpreter
 
-Progress tracking:
-- [x] β-reduction
-- [ ] α-equivalence
-- [ ] η-equivalence
-- [x] expression bindings
-- [x] REPL
-- [ ] File
-- [ ] stdlib
-
-```sh
+```haskell
 ➜ rlwrap cargo r -r --quiet
 𝞴> succ :: \n f x. f (n f x)
 𝞴n f x. f (n f x)
@@ -27,3 +18,11 @@ Progress tracking:
 error: Unexpected token, wanted Lambda found Dot at (1:8)
 𝞴> 
 ```
+Progress tracking:
+- [x] β-reduction
+- [ ] α-equivalence
+- [ ] η-equivalence
+- [x] expression bindings
+- [x] REPL
+- [ ] File
+- [ ] stdlib
