@@ -21,6 +21,8 @@ error: Unexpected token, wanted Lambda found Dot at (1:8)
 Progress tracking:
 - [x] β-reduction
 - [ ] α-equivalence
+  - [ ] print churchland numerals as numbers?
+  - [ ] types?
 - [ ] η-equivalence
 - [x] expression bindings
 - [x] REPL
