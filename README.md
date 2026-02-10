@@ -24,5 +24,5 @@ Progress tracking:
 - [ ] η-equivalence
 - [x] expression bindings
 - [x] REPL
-- [ ] File
+- [x] File
 - [ ] stdlib

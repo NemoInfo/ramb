@@ -135,6 +135,7 @@ fn next_token(mut content: &str) -> (&str, Result<Token<'_>, ()>) {
     '('        => return (&content[1..],            Ok(OParen)),
     ')'        => return (&content[1..],            Ok(CParen)),
     '.'        => return (&content[1..],            Ok(Dot)),
+    '?'        => return (&content[1..],            Ok(Print)),
     ':'        => if let Some(':') = content[1..].chars().next() { (&content[2..], Ok(Assign)) } 
                   else { (content, Err(())) }
     '\\' | '𝞴' => return (&content[c.len_utf8()..], Ok(Lambda)),
@@ -172,6 +173,7 @@ pub enum Token<'a> {
   Lambda,
   Dot,
   Assign,
+  Print,
   Ident(&'a str)
 }
 
@@ -290,16 +292,40 @@ fn parse_statement<'a>(ts: &'a [FatToken<'a>], bindings: &mut HashMap<Rc<String>
   match parse_assign(ts) {
     Ok((ts, expr)) => {
       let Fun { arg, body } = expr.as_ref() else { unreachable!() };
-      bindings.insert(Rc::clone(arg), Rc::clone(body));
-      Ok((ts, Rc::clone(body)))
+      let mut body = body.clone();
+      let mut new_body;
+      for (pat, val) in bindings.iter() {
+        new_body = apply_binding(pat, &body, val);
+        body = new_body.clone();
+      }
+      bindings.insert(Rc::clone(&arg), Rc::clone(&body));
+      Ok((ts, Rc::clone(&body)))
     }
-    Err(err1) => parse_expr(ts).map_err(|err2| best_error(err1, err2)),
+    Err(err1) => { 
+      let (ts, mut expr) = parse_expr(ts).map_err(|err2| best_error(err1, err2))?; 
+      let Ok((ts, _)) = parse_token(ts, Print) else { return Ok((ts, expr)) };
+      for (pat, val) in bindings.iter() {
+        expr = apply_binding(pat, &expr, val);        
+      }                                               
+      println!("{expr}");
+      beta(&expr);
+      Ok((ts, expr))
+    },
   }
 }
 
 fn main() -> std::io::Result<()> {
   let mut input = String::new();
   let mut bindings = HashMap::new();
+  let args = std::env::args().collect::<Vec<_>>();
+  if args.len() == 2 {
+    let file = &args[1];
+    let input = std::fs::read_to_string(file)?;
+    for line in input.lines() {
+      if let Err(e) = process_input(line, &mut bindings) { print_error(&e) }
+    }
+    Ok(())
+  } else {
   loop {
     print!("𝞴> ");
     io::stdout().flush()?;
@@ -307,6 +333,7 @@ fn main() -> std::io::Result<()> {
     io::stdin().read_line(&mut input)?;
 
     if let Err(e) = process_input(&input, &mut bindings) { print_error(&e) }
+  }
   }
 }
 
@@ -325,8 +352,6 @@ fn process_input(input: &str, bindings: &mut HashMap<Rc<String>, Rc<Expression>>
   for (pat, val) in bindings.iter() {
     expr = apply_binding(pat, &expr, val);
   }
-  println!("{expr}");
-  beta(&expr);
   Ok(())
 }
 
